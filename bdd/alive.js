@@ -1,92 +1,88 @@
-// Importez dotenv et chargez les variables d'environnement depuis le fichier .env
+// Import dotenv and load environment variables from the .env file
 require("dotenv").config();
 
 const { Pool } = require("pg");
 
-// Utilisez le module 'set' pour obtenir la valeur de DATABASE_URL depuis vos configurations
-const s = require("../set");
+// Use the 'set' module to obtain the value of DATABASE_URL from your configurations
+const s = require("./set");
 
-// Récupérez l'URL de la base de données de la variable s.DATABASE_URL
-var dbUrl=s.DATABASE_URL?s.DATABASE_URL:"postgres://db_7xp9_user:6hwmTN7rGPNsjlBEHyX49CXwrG7cDeYi@dpg-cj7ldu5jeehc73b2p7g0-a.oregon-postgres.render.com/db_7xp9"
+// Retrieve the database URL from the .DATABASE_URL variable
+var dbUrl=s.DATABASE_URL?s.DATABASE_URL:"postgres://db_7xp9_user:6hwml7T7GPmsj1iBEHyX4X9CwGr7cDey1@dpg-cj7lduj5eeh/postgres"
 const proConfig = {
-  connectionString: dbUrl,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+    connectionString: dbUrl,
+    ssl: {
+        rejectUnauthorized: false,
+    },
 };
 
-// Créez une pool de connexions PostgreSQL
+// Create a PostgreSQL connection pool
 const pool = new Pool(proConfig);
 
-// Fonction pour créer la table "alive" avec une colonne "id"
+// Function to create the "alive" table with an "id" column
 const creerTableAlive = async () => {
     try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS alive (
-          id serial PRIMARY KEY,
-          message text,
-          lien text
-        );
-      `);
-      console.log("La table 'alive' a été créée avec succès.");
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS alive (
+                id serial PRIMARY KEY,
+                message text,
+                link text
+            );
+        `);
+        console.log("The 'alive' table was successfully created.");
     } catch (e) {
-      console.error("Une erreur est survenue lors de la création de la table 'alive':", e);
+        console.error("An error occurred while creating the 'alive' table:", e);
     }
-  };
-  
-  // Appelez la méthode pour créer la table "alive"
-  creerTableAlive();
+};
 
-// Fonction pour ajouter ou mettre à jour un enregistrement dans la table "alive"
-async function addOrUpdateDataInAlive(message, lien) {
+// Call the method to create the "alive" table
+creerTableAlive();
+
+// Function to add or update a record in the "alive" table
+async function addOrUpdateDataInAlive(message, link) {
     const client = await pool.connect();
     try {
-      // Insérez ou mettez à jour les données dans la table "alive"
-      const query = `
-        INSERT INTO alive (id, message, lien)
-        VALUES (1, $1, $2)
-        ON CONFLICT (id)
-        DO UPDATE SET message = excluded.message, lien = excluded.lien;
-      `;
-      const values = [message, lien];
-  
-      await client.query(query, values);
-      console.log("Données ajoutées ou mises à jour dans la table 'alive' avec succès.");
+        // Insert or update data in the "alive" table
+        const query = `
+            INSERT INTO alive (id, message, link)
+            VALUES (1, $1, $2)
+            ON CONFLICT (id)
+            DO UPDATE SET message = excluded.message, link = excluded.link;
+        `;
+        const values = [message, link];
+
+        await client.query(query, values);
+        console.log("Data successfully added or updated in the 'alive' table.");
     } catch (error) {
-      console.error("Erreur lors de l'ajout ou de la mise à jour des données dans la table 'alive':", error);
+        console.error("Error when adding or updating data in the 'alive' table:", error);
     } finally {
-      client.release();
+        client.release();
     }
-  };
+}
 
- 
-  async function getDataFromAlive() {
+// Function to retrieve data from the "alive" table
+async function getDataFromAlive() {
     const client = await pool.connect();
     try {
-      // Exécutez la requête SELECT pour récupérer les données
-      const query = "SELECT message, lien FROM alive WHERE id = 1";
-      const result = await client.query(query);
-  
-      if (result.rows.length > 0) {
-        const { message, lien } = result.rows[0];
-        return { message, lien };
-      } else {
-        console.log("Aucune donnée trouvée dans la table 'alive'.");
+        // Execute the SELECT query to retrieve the data
+        const query = "SELECT message, link FROM alive WHERE id = 1;";
+        const result = await client.query(query);
+
+        if (result.rows.length > 0) {
+            const { message, link } = result.rows[0];
+            return { message, link };
+        } else {
+            console.log("No data found in the 'alive' table.");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error while retrieving data from the 'alive' table:", error);
         return null;
-      }
-    } catch (error) {
-      console.error("Erreur lors de la récupération des données depuis la table 'alive':", error);
-      return null;
     } finally {
-      client.release();
+        client.release();
     }
-  };
-  
-  
-  
+}
 
-  module.exports = {
+module.exports = {
     addOrUpdateDataInAlive,
     getDataFromAlive,
-    
-  };
+};
